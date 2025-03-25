@@ -4,12 +4,15 @@ defmodule WebSocket.Request do
     [first_line | headers] = String.split(data, "\r\n", trim: true)
     request_line = parse_first_line(first_line)
 
-    %{
+    retval = %{
       "method" => request_line["method"],
       "uri" => request_line["uri"],
       "version" => request_line["version"],
       "headers" => parse_headers(headers)
     }
+
+    display(retval)
+    retval
   end
 
   def parse_first_line(line) do
@@ -24,7 +27,6 @@ defmodule WebSocket.Request do
 
   def parse_headers(headers) do
     headers
-    |> Enum.map(&String.downcase/1)
     |> Enum.map(&parse_one_header/1)
     |> Enum.filter(fn entry -> tuple_size(entry) != 0 end)
   end
