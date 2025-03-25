@@ -24,6 +24,7 @@ defmodule WebSocket.Request do
 
   def parse_headers(headers) do
     headers
+    |> Enum.map(&String.downcase/1)
     |> Enum.map(&parse_one_header/1)
     |> Enum.filter(fn entry -> tuple_size(entry) != 0 end)
   end
