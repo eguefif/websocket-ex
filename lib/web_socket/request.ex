@@ -4,12 +4,15 @@ defmodule WebSocket.Request do
     [first_line | headers] = String.split(data, "\r\n", trim: true)
     request_line = parse_first_line(first_line)
 
-    %{
+    retval = %{
       "method" => request_line["method"],
       "uri" => request_line["uri"],
       "version" => request_line["version"],
       "headers" => parse_headers(headers)
     }
+
+    display(retval)
+    retval
   end
 
   def parse_first_line(line) do
