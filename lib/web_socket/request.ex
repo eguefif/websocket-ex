@@ -1,6 +1,5 @@
 defmodule WebSocket.Request do
   def parse(data) do
-    # , trim: true)
     [first_line | headers] = String.split(data, "\r\n", trim: true)
     request_line = parse_first_line(first_line)
 
@@ -25,20 +24,20 @@ defmodule WebSocket.Request do
     }
   end
 
-  def parse_headers(headers) do
+  defp parse_headers(headers) do
     headers
     |> Enum.map(&parse_one_header/1)
     |> Enum.filter(fn entry -> tuple_size(entry) != 0 end)
   end
 
-  def parse_one_header(header) do
+  defp parse_one_header(header) do
     case String.split(header, ":") do
       [key, value] -> {String.trim(key), String.trim(value)}
       _ -> {}
     end
   end
 
-  def display(header) do
+  defp display(header) do
     require Logger
     IO.puts(inspect("****HTTP Request****"))
     IO.puts(inspect("#{header["method"]} #{header["uri"]} #{header["version"]}"))
@@ -49,14 +48,5 @@ defmodule WebSocket.Request do
     end)
 
     IO.puts("****Request end****")
-  end
-
-  def to_string(header) do
-    retval = "#{header["method"]} #{header["uri"]} #{header["version"]}\n\n"
-
-    header["headers"]
-    |> Enum.reduce(retval, fn header, acc ->
-      acc <> "#{elem(header, 0)}: #{elem(header, 1)}\n"
-    end)
   end
 end
