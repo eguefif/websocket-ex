@@ -49,7 +49,6 @@ defmodule WebSocket.Handshake do
     response_header = make_response_header(response_key)
     Logger.info("Sending response: \n#{inspect(response_header, charlists: :as_charlists)}")
     ThousandIsland.Socket.send(socket, response_header)
-    IO.puts("TEST")
     :ok
   end
 
