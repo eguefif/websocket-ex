@@ -65,8 +65,8 @@ defmodule WebSocketTest do
     test "it get the mask" do
       frame = <<129, 133, 166, 51, 46, 40, 238, 86, 66, 68, 201>>
       result = Frame.read(frame)
-      message = Frame.unmask_payload(frame)
-      assert message == "Hello2"
+      message = Frame.unmask_payload(result)
+      assert message == "Hello"
     end
 
     test "is_mask?" do

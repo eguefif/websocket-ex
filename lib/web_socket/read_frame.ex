@@ -1,4 +1,6 @@
 defmodule WebSocket.Frame do
+  import Bitwise
+
   defstruct frame: 0, opcode: 0, length: 0, mask: 0, payload: 0
 
   alias WebSocket.Frame
@@ -63,6 +65,26 @@ defmodule WebSocket.Frame do
   end
 
   def unmask_payload(frame) do
-    "hello"
+    IO.puts(inspect(frame))
+    payload = :binary.bin_to_list(frame.payload)
+    mask = create_mask_byte(frame.mask)
+
+    IO.puts(inspect(frame.frame))
+    IO.puts(inspect(payload))
+
+    unmasked_payload =
+      payload
+      |> Enum.reduce([], fn byte, acc ->
+        value = bxor(byte, mask)
+        acc ++ [value]
+      end)
+
+    IO.puts(inspect(unmasked_payload))
+    List.to_string(unmasked_payload)
+  end
+
+  def create_mask_byte(mask) do
+    part = mask &&& 0b1111
+    part <<< 4 && part
   end
 end
