@@ -1,6 +1,7 @@
 defmodule WebSocket do
   use ThousandIsland.Handler
   alias WebSocket.Handshake
+  alias WebSocket.Frame
 
   @impl ThousandIsland.Handler
   def handle_data(data, socket, state) do
@@ -8,6 +9,9 @@ defmodule WebSocket do
       Handshake.handshake(data, socket)
       {:continue, state}
     else
+      Frame.read(data)
+      ThousandIsland.Socket.send(socket, data)
+      {:continue, state}
     end
   end
 
