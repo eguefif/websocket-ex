@@ -47,8 +47,9 @@ defmodule WebSocket.Frame do
         end
 
       displacement = trunc((9 + size_len) / 8)
-      <<_::binary-size(displacement), mask::32, _::binary>> = frame.frame
-      %{frame | mask: mask}
+      binary_size = trunc(32 / 8)
+      <<_::binary-size(displacement), mask::binary-size(binary_size), _::binary>> = frame.frame
+      %{frame | mask: :binary.bin_to_list(mask)}
     else
       frame
     end
@@ -66,25 +67,12 @@ defmodule WebSocket.Frame do
 
   def unmask_payload(frame) do
     IO.puts(inspect(frame))
-    payload = :binary.bin_to_list(frame.payload)
-    mask = create_mask_byte(frame.mask)
+    mask = frame.mask
 
-    IO.puts(inspect(frame.frame))
-    IO.puts(inspect(payload))
-
-    unmasked_payload =
-      payload
-      |> Enum.reduce([], fn byte, acc ->
-        value = bxor(byte, mask)
-        acc ++ [value]
-      end)
-
-    IO.puts(inspect(unmasked_payload))
-    List.to_string(unmasked_payload)
-  end
-
-  def create_mask_byte(mask) do
-    part = mask &&& 0b1111
-    part <<< 4 && part
+    frame.payload
+    |> :binary.bin_to_list()
+    |> Enum.with_index()
+    |> Enum.map(fn {byte, i} -> bxor(byte, Enum.at(mask, rem(i, 4))) end)
+    |> List.to_string()
   end
 end
