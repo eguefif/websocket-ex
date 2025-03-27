@@ -1,4 +1,5 @@
 defmodule WebSocket do
+  require Logger
   use ThousandIsland.Handler
   alias WebSocket.Handshake
   alias WebSocket.Frame
@@ -9,8 +10,13 @@ defmodule WebSocket do
       Handshake.handshake(data, socket)
       {:continue, state}
     else
-      Frame.read(data)
-      ThousandIsland.Socket.send(socket, data)
+      frame = Frame.read(data)
+      Logger.info("Frame: #{inspect(frame)}")
+      payload = Frame.unmask_payload(frame)
+      Logger.info("Payload: #{payload}")
+      response = Frame.build_frame(:text, payload)
+      Logger.info("response: #{inspect(response)}")
+      ThousandIsland.Socket.send(socket, response)
       {:continue, state}
     end
   end

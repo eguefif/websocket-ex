@@ -66,7 +66,6 @@ defmodule WebSocket.Frame do
   end
 
   def unmask_payload(frame) do
-    IO.puts(inspect(frame))
     mask = frame.mask
 
     frame.payload
@@ -74,5 +73,24 @@ defmodule WebSocket.Frame do
     |> Enum.with_index()
     |> Enum.map(fn {byte, i} -> bxor(byte, Enum.at(mask, rem(i, 4))) end)
     |> List.to_string()
+  end
+
+  def build_frame(type, payload) do
+    first_byte = make_first_byte(type)
+    second_byte = make_length(String.length(payload))
+
+    [first_byte, second_byte, String.to_charlist(payload)]
+    |> List.flatten()
+    |> :binary.list_to_bin()
+  end
+
+  def make_first_byte(type) do
+    case type do
+      :text -> 0b10000001
+    end
+  end
+
+  def make_length(len) do
+    len
   end
 end
