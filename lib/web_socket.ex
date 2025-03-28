@@ -17,7 +17,6 @@ defmodule WebSocket do
         {:continue, state}
       else
         {:error, e} -> send_message(socket, "Error: #{e}")
-        _ -> Logger.error("Error while processing frame: #{inspect(socket)}")
       end
     end
   end
@@ -25,17 +24,16 @@ defmodule WebSocket do
   def parse_payload(payload) do
     case String.split(payload, " ", parts: 2) do
       ["NAME", name] -> {:ok, {:name, name}}
-      ["MSG", msg] -> {:ok, {:msg, Enum.join(msg, " ")}}
+      ["MSG", msg] -> {:ok, {:msg, msg}}
       _ -> {:error, "Unknown command"}
     end
   end
 
   def run_cmd({:name, name}, socket) do
-    peername = get_peername(socket)
-    client = {:via, Registry, {Registry.WS, peername, name}}
-    Agent.start_link(fn -> [] end, name: client)
-    Registry.register(Registry.WS, :broadcast, [])
     Logger.info("New client: #{name}")
+    peername = get_peername(socket)
+    Registry.register(Registry.WS, peername, name)
+    Registry.register(Registry.WS, :broadcast, [])
   end
 
   def run_cmd({:msg, message}, socket) do
@@ -45,8 +43,6 @@ defmodule WebSocket do
     Registry.dispatch(Registry.WS, :broadcast, fn clients ->
       for {pid, _} <- clients, do: send(pid, {:send, name <> ": " <> message})
     end)
-
-    send_message(socket, message)
   end
 
   def is_http_request?(data) do
