@@ -4,7 +4,8 @@ defmodule WebSocket.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {ThousandIsland, port: 8000, handler_module: WebSocket}
+      {ThousandIsland, port: 8000, handler_module: WebSocket},
+      {Registry, keys: :unique, name: Registry.WS}
     ]
 
     opts = [strategy: :one_for_one, name: WS.Supervisor]
