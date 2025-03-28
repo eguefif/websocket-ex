@@ -11,12 +11,8 @@ defmodule WebSocket do
       {:continue, state}
     else
       frame = Frame.read(data)
-      Logger.info("Frame: #{inspect(frame)}")
       payload = Frame.unmask_payload(frame)
       Logger.info("Payload: #{payload}")
-      response = Frame.build_frame(:text, payload)
-      Logger.info("response: #{inspect(response)}")
-      ThousandIsland.Socket.send(socket, response)
       {:continue, state}
     end
   end
@@ -24,5 +20,11 @@ defmodule WebSocket do
   def is_http_request?(data) do
     [first_line | _] = String.split(data, "\r\n", trim: true)
     String.contains?(first_line, "HTTP")
+  end
+
+  def handle_call({:send, message}, _from, {socket, state}) do
+    response_frame = Frame.build_frame(:text, message)
+    ThousandIsland.Socket.send(socket, response_frame)
+    {:reply, :ok, {socket, state}}
   end
 end

@@ -3,6 +3,11 @@ defmodule WebSocket.Application do
 
   @impl true
   def start(_type, _args) do
-    ThousandIsland.start_link(port: 8000, handler_module: WebSocket)
+    children = [
+      {ThousandIsland, port: 8000, handler_module: WebSocket}
+    ]
+
+    opts = [strategy: :one_for_one, name: WS.Supervisor]
+    Supervisor.start_link(children, opts)
   end
 end
