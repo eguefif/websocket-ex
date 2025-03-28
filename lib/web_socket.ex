@@ -12,17 +12,20 @@ defmodule WebSocket do
     else
       with frame <- Frame.read(data),
            payload <- Frame.unmask_payload(frame),
-           command <- parse_payload(payload) do
+           {:ok, command} <- parse_payload(payload) do
         run_cmd(command, socket)
         {:continue, state}
+      else
+        {:error, e} -> send_message(socket, "Error: #{e}")
+        _ -> Logger.error("Error while processing frame: #{inspect(socket)}")
       end
     end
   end
 
   def parse_payload(payload) do
-    case String.split(payload, " ") do
-      ["NAME", name] -> {:name, name}
-      ["MSG", msg] -> {:msg, msg}
+    case String.split(payload, " ", parts: 2) do
+      ["NAME", name] -> {:ok, {:name, name}}
+      ["MSG", msg] -> {:ok, {:msg, Enum.join(msg, " ")}}
       _ -> {:error, "Unknown command"}
     end
   end
@@ -42,6 +45,8 @@ defmodule WebSocket do
     Registry.dispatch(Registry.WS, :broadcast, fn clients ->
       for {pid, _} <- clients, do: send(pid, {:send, name <> ": " <> message})
     end)
+
+    send_message(socket, message)
   end
 
   def is_http_request?(data) do
@@ -55,11 +60,12 @@ defmodule WebSocket do
   end
 
   def handle_info({:send, message}, {socket, state}) do
-    peername = get_peername(socket)
-    [{_, name}] = Registry.lookup(Registry.WS, peername)
-    Logger.info("Sending #{message} to #{name}")
+    send_message(socket, message)
+    {:noreply, {socket, state}}
+  end
+
+  def send_message(socket, message) do
     response_frame = Frame.build_frame(:text, message)
     ThousandIsland.Socket.send(socket, response_frame)
-    {:noreply, {socket, state}}
   end
 end
