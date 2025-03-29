@@ -10,20 +10,23 @@ defmodule WebSocket do
   end
 
   def send_message(ws_socket, message) do
-    send(ws_socket, message)
+    send(ws_socket, {:send, message})
   end
 
   # ServerAPI
   @impl ThousandIsland.Handler
-  def handle_connexion(_socket, state) do
-    # TODO: Need the module that implements our handler. That's the one to call to create the process.
-    {:ok, ws_socket} = WebSocket.Handler.start_link(self())
+  def handle_connection(_socket, [handler | _] = state) do
+    IO.puts("starting handler in #{inspect(self())}")
+    # handler = Enum.at(state, 0)
+    {:ok, ws_socket} = handler.start_link(self())
 
     {:continue, {state, ws_socket}}
   end
 
   @impl ThousandIsland.Handler
   def handle_data(data, socket, {state, ws_socket}) do
+    IO.puts("Island socket handle data called")
+
     if is_http_request?(data) do
       Handshake.handshake(data, socket)
       {:continue, {state, ws_socket}}

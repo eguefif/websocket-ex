@@ -36,9 +36,10 @@ defmodule WebSocket.Handler do
         {:ok, ws_socket}
       end
 
+      @impl true
       def handle_info({:frame, frame}, ws_socket) do
         __MODULE__.handle_frame(frame, ws_socket)
-        {:reply, :ok, ws_socket}
+        {:noreply, ws_socket}
       end
     end
   end
