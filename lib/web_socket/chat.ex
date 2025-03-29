@@ -4,6 +4,11 @@ defmodule Chat do
 
   @impl WebSocket.Handler
   def handle_frame(frame, ws_socket) do
+    if !is_registered_client?(ws_socket) do
+      peername = WebSocket.get_peername(ws_socket)
+      Registry.register(Registry.Clients, :broadcast, peername)
+    end
+
     with {:ok, command} <- parse_payload(frame) do
       Logger.debug("New frame: #{frame}")
       run_cmd(command, ws_socket)
@@ -12,6 +17,11 @@ defmodule Chat do
     end
 
     :continue
+  end
+
+  def is_registered_client?(ws_socket) do
+    peername = WebSocket.get_peername(ws_socket)
+    peername in Registry.values(Registry.Clients, :broadcast, self())
   end
 
   def parse_payload(payload) do
@@ -27,16 +37,18 @@ defmodule Chat do
     peername = WebSocket.get_peername(ws_socket)
     Logger.debug("Peername #{peername}")
     Registry.register(Registry.Clients, peername, name)
-    Registry.register(Registry.Clients, :broadcast, name)
   end
 
   def run_cmd({:msg, message}, ws_socket) do
     Logger.debug("New message: #{message}")
     peername = WebSocket.get_peername(ws_socket)
     Logger.debug("Peername #{peername}")
-    [{_, name}] = Registry.lookup(Registry.Clients, peername)
 
-    Logger.debug("Found a client: to send message #{name}")
+    name =
+      case Registry.lookup(Registry.Clients, peername) do
+        [{_, name}] -> name
+        _ -> "Anonymous"
+      end
 
     Registry.dispatch(Registry.Clients, :broadcast, fn clients ->
       for {pid, _} <- clients, do: send(pid, {:send, name <> ": " <> message})

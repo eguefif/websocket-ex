@@ -13,7 +13,7 @@ defmodule WebSocket.Handler do
       end
       ```
   """
-  @callback handle_frame(frame :: binary(), socket :: ThousandIsland.Socket.t()) :: term()
+  @callback handle_frame(frame :: binary(), socket :: pid()) :: term()
 
   defmacro __using__(_opts) do
     quote location: :keep do
