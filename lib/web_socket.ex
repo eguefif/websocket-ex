@@ -1,3 +1,4 @@
+# Add a comment here for stack branch 2 gitbutler
 defmodule WebSocket do
   use ThousandIsland.Handler
   alias WebSocket.Handshake
